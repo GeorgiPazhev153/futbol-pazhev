@@ -1,7 +1,14 @@
 import re
-from src.db import execute_query, fetch_all
+from src.database.db import execute_query, fetch_all
 
 VALID_POSITIONS = {'GK', 'DF', 'MF', 'FW'}
+
+
+def find_player_by_name(name):
+    rows = fetch_all("SELECT * FROM players WHERE full_name = ?", (name.strip(),))
+    if not rows:
+        raise ValueError(f"Играч '{name}' не е намерен.")
+    return dict(rows[0])
 
 
 def _find_club_id(club_name):
@@ -25,24 +32,19 @@ def add_player(full_name, club_name, position, number, birth_date=None, national
     if not full_name or not full_name.strip():
         raise ValueError("Името на играча не може да бъде празно.")
     full_name = full_name.strip()
-
     pos = position.upper().strip()
     if pos not in VALID_POSITIONS:
         raise ValueError(f"Невалидна позиция '{position}'. Позволени: {', '.join(sorted(VALID_POSITIONS))}")
-
     try:
         num = int(number)
     except (ValueError, TypeError):
         raise ValueError(f"Невалиден номер '{number}'. Трябва да е число между 1 и 99.")
     if num < 1 or num > 99:
         raise ValueError(f"Номерът трябва да е между 1 и 99, получен: {num}.")
-
     if birth_date:
         if not re.match(r'^\d{4}-\d{2}-\d{2}$', birth_date.strip()):
             raise ValueError("Невалиден формат на дата. Използвайте YYYY-MM-DD.")
-
     club_id = _find_club_id(club_name)
-
     execute_query(
         "INSERT INTO players (full_name, birth_date, nationality, position, number, club_id) "
         "VALUES (?, ?, ?, ?, ?, ?)",
@@ -72,8 +74,9 @@ def get_players_by_club(club_name):
 
 def get_all_players():
     rows = fetch_all(
-        "SELECT p.id, p.full_name, p.birth_date, p.nationality, p.position, p.number, p.status, c.name as club_name "
-        "FROM players p JOIN clubs c ON p.club_id = c.id ORDER BY c.name, p.number"
+        "SELECT p.id, p.full_name, p.birth_date, p.nationality, p.position, p.number, p.status, "
+        "COALESCE(c.name, 'Без клуб') as club_name "
+        "FROM players p LEFT JOIN clubs c ON p.club_id = c.id ORDER BY c.name, p.number"
     )
     if not rows:
         return "Няма добавени играчи."
@@ -92,7 +95,6 @@ def update_player_number(identifier, new_number):
         raise ValueError(f"Невалиден номер '{new_number}'.")
     if new_num < 1 or new_num > 99:
         raise ValueError(f"Номерът трябва да е между 1 и 99.")
-
     player = _find_player(identifier)
     execute_query("UPDATE players SET number = ? WHERE id = ?", (new_num, player['id']))
     return f"Номерът на '{player['full_name']}' е сменен на {new_num}."

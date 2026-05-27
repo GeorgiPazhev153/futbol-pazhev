@@ -1,4 +1,4 @@
-from src.db import execute_query, fetch_all
+from src.database.db import execute_query, fetch_all
 
 
 def add_club(name):
@@ -22,10 +22,16 @@ def get_all_clubs():
     return "\n".join(result)
 
 
+def find_club_by_name(name):
+    rows = fetch_all("SELECT id, name FROM clubs WHERE name = ?", (name.strip(),))
+    if not rows:
+        raise ValueError(f"Клуб '{name}' не е намерен.")
+    return dict(rows[0])
+
+
 def delete_club(identifier):
     if not identifier:
         raise ValueError("Моля, въведете име или ID на клуб за изтриване.")
-
     if identifier.isdigit():
         row = fetch_all("SELECT id, name FROM clubs WHERE id = ?", (int(identifier),))
         if not row:
@@ -44,11 +50,9 @@ def update_club(identifier, new_name):
     if not new_name or not new_name.strip():
         raise ValueError("Новото име не може да бъде празно.")
     new_name = new_name.strip()
-
     duplicate = fetch_all("SELECT id FROM clubs WHERE name = ?", (new_name,))
     if duplicate:
         raise ValueError(f"Клуб '{new_name}' вече съществува.")
-
     if identifier.isdigit():
         row = fetch_all("SELECT id, name FROM clubs WHERE id = ?", (int(identifier),))
         if not row:
