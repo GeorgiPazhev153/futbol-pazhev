@@ -1,3 +1,4 @@
+from src.chatbot.intents import INTENTS
 from src.services.clubs_service import add_club, get_all_clubs, delete_club, update_club
 from src.services.players_service import (
     add_player, get_players_by_club, get_all_players,
@@ -5,6 +6,12 @@ from src.services.players_service import (
 )
 from src.services.transfers_service import (
     transfer_player, list_transfers_by_player, list_transfers_by_club
+)
+from src.chatbot.handlers_leagues import (
+    handle_create_league, handle_list_leagues,
+    handle_add_team_to_league, handle_remove_team_from_league,
+    handle_show_league_teams, handle_generate_schedule,
+    handle_regenerate_schedule, handle_show_schedule
 )
 
 
@@ -19,11 +26,7 @@ class Router:
         return "Не разпознах командата. Напишете 'помощ' за наличните команди."
 
     def handle_help(self):
-        import json, os
-        path = os.path.join(os.path.dirname(__file__), 'intents.json')
-        with open(path, 'r', encoding='utf-8') as f:
-            intents = json.load(f)['intents']
-        for intent in intents:
+        for intent in INTENTS:
             if intent['tag'] == 'help':
                 return intent['responses'][0]
         return "Налични команди: помощ, добави клуб, списък клубове, изтрий клуб, промени клуб, изход."
@@ -76,7 +79,7 @@ class Router:
 
     def handle_transfer_player(self, player_name=None, from_club=None, to_club=None, date=None, fee=None):
         if not all([player_name, from_club, to_club, date]):
-            return ("Моля, използвайте: трансфер <играч> от <клуб> в <клуб> YYYY-MM-DD [сума <число>]")
+            return "Моля, използвайте: трансфер <играч> от <клуб> в <клуб> YYYY-MM-DD [сума <число>]"
         return transfer_player(player_name, from_club, to_club, date, fee)
 
     def handle_show_transfers(self, name=None):
@@ -90,3 +93,29 @@ class Router:
             return list_transfers_by_club(name.strip())
         except ValueError:
             return f"Не е намерен играч или клуб с име '{name.strip()}'."
+
+    # --- League handlers ---
+
+    def handle_create_league(self, name=None, season=None):
+        return handle_create_league(name, season)
+
+    def handle_list_leagues(self):
+        return handle_list_leagues()
+
+    def handle_add_team_to_league(self, club_name=None, league_name=None, season=None):
+        return handle_add_team_to_league(club_name, league_name, season)
+
+    def handle_remove_team_from_league(self, club_name=None, league_name=None, season=None):
+        return handle_remove_team_from_league(club_name, league_name, season)
+
+    def handle_show_league_teams(self, league_name=None, season=None):
+        return handle_show_league_teams(league_name, season)
+
+    def handle_generate_schedule(self, league_name=None, season=None):
+        return handle_generate_schedule(league_name, season)
+
+    def handle_regenerate_schedule(self, league_name=None, season=None):
+        return handle_regenerate_schedule(league_name, season)
+
+    def handle_show_schedule(self, league_name=None, season=None):
+        return handle_show_schedule(league_name, season)

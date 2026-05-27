@@ -1,14 +1,10 @@
 import re
-import json
-import os
-
-INTENTS_PATH = os.path.join(os.path.dirname(__file__), 'intents.json')
+from src.chatbot.intents import INTENTS
 
 
 class NLU:
     def __init__(self):
-        with open(INTENTS_PATH, 'r', encoding='utf-8') as f:
-            self.intents = json.load(f)['intents']
+        self.intents = INTENTS
 
     def process(self, text):
         if not text or not text.strip():
