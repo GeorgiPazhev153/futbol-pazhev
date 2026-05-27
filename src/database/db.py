@@ -1,7 +1,7 @@
 import sqlite3
 import os
 
-DB_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'football.db')
+DB_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'football.db')
 
 
 def get_connection():
@@ -43,8 +43,22 @@ def fetch_all(sql, params=None):
         conn.close()
 
 
+def with_transaction(callback):
+    conn = get_connection()
+    try:
+        conn.execute("BEGIN")
+        result = callback(conn)
+        conn.commit()
+        return result
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
 def init_db():
-    schema_path = os.path.join(os.path.dirname(__file__), '..', 'sql', 'schema.sql')
+    schema_path = os.path.join(os.path.dirname(__file__), '..', '..', 'sql', 'schema.sql')
     with open(schema_path, 'r', encoding='utf-8') as f:
         sql = f.read()
     conn = get_connection()
