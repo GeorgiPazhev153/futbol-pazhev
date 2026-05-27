@@ -1,6 +1,10 @@
 import re
 import json
 from src.clubs_service import add_club, get_all_clubs, delete_club, update_club
+from src.players_service import (
+    add_player, get_players_by_club, get_all_players,
+    update_player_number, update_player_status, delete_player
+)
 
 INTENTS_FILE = 'src/intents.json'
 
@@ -68,5 +72,47 @@ class Chatbot:
             return "Моля, укажете клуб и ново име. Пример: промени клуб Левски на ЦСКА"
         try:
             return update_club(identifier.strip(), new_name.strip())
+        except (ValueError, RuntimeError) as e:
+            return str(e)
+
+    # --- Player handlers ---
+
+    def handle_add_player(self, name=None, club_name=None, position=None, number=None):
+        if not all([name, club_name, position, number]):
+            return "Моля, използвайте: добави играч <име> в <клуб> позиция <GK|DF|MF|FW> номер <число>"
+        try:
+            return add_player(name, club_name, position, number)
+        except (ValueError, RuntimeError) as e:
+            return str(e)
+
+    def handle_list_players(self, club_name=None):
+        if not club_name:
+            return "Моля, укажете клуб. Пример: покажи играчи на Левски"
+        try:
+            return get_players_by_club(club_name.strip())
+        except (ValueError, RuntimeError) as e:
+            return str(e)
+
+    def handle_update_player_number(self, identifier=None, new_number=None):
+        if not identifier or not new_number:
+            return "Моля, използвайте: смени номер на <играч> на <число>"
+        try:
+            return update_player_number(identifier.strip(), new_number.strip())
+        except (ValueError, RuntimeError) as e:
+            return str(e)
+
+    def handle_update_player_status(self, identifier=None, new_status=None):
+        if not identifier or not new_status:
+            return "Моля, използвайте: смени статус на <играч> на <статус>"
+        try:
+            return update_player_status(identifier.strip(), new_status.strip())
+        except (ValueError, RuntimeError) as e:
+            return str(e)
+
+    def handle_delete_player(self, identifier=None):
+        if not identifier:
+            return "Моля, укажете име на играч. Пример: изтрий играч Иван Иванов"
+        try:
+            return delete_player(identifier.strip())
         except (ValueError, RuntimeError) as e:
             return str(e)

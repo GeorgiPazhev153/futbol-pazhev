@@ -3,3 +3,16 @@ CREATE TABLE IF NOT EXISTS clubs (
     name TEXT NOT NULL UNIQUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS players (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    full_name TEXT NOT NULL,
+    birth_date TEXT,
+    nationality TEXT DEFAULT 'Неизвестна',
+    position TEXT NOT NULL CHECK (position IN ('GK', 'DF', 'MF', 'FW')),
+    number INTEGER NOT NULL CHECK (number BETWEEN 1 AND 99),
+    status TEXT DEFAULT 'active',
+    club_id INTEGER NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (club_id) REFERENCES clubs(id) ON DELETE CASCADE
+);
