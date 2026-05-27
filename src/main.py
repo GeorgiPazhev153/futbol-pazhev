@@ -1,4 +1,3 @@
-import logging
 import sys
 import os
 
@@ -9,21 +8,17 @@ if sys.stdout.encoding != 'utf-8':
 if sys.stderr.encoding != 'utf-8':
     sys.stderr.reconfigure(encoding='utf-8')
 
-from src.db import init_db
-from src.chatbot import Chatbot
-
-logging.basicConfig(
-    filename='commands.log',
-    level=logging.INFO,
-    format='%(asctime)s | %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S',
-    encoding='utf-8'
-)
+from src.database.db import init_db
+from src.chatbot.nlu import NLU
+from src.chatbot.router import Router
+from src.utils.logger import Logger
 
 
 def main():
     init_db()
-    bot = Chatbot()
+    nlu = NLU()
+    router = Router()
+    logger = Logger()
 
     print("=== Футболен клуб Chatbot ===")
     print("Напишете 'помощ' за наличните команди или 'изход' за изход.")
@@ -38,8 +33,9 @@ def main():
         if not user_input:
             continue
 
-        response = bot.process(user_input)
-        logging.info("%s | %s", user_input, response)
+        intent, params = nlu.process(user_input)
+        response = router.route(intent, params)
+        logger.log(user_input, intent, params, response)
 
         if response == "EXIT":
             print("Довиждане!")
