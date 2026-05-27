@@ -23,6 +23,7 @@ from src.chatbot.handlers_matches import (
     handle_add_card as _handle_add_card,
     handle_show_events as _handle_show_events,
 )
+from src.chatbot.handlers_standings import handle_show_standings as _handle_show_standings
 
 
 class Router:
@@ -183,3 +184,8 @@ class Router:
 
     def handle_show_events(self, match_id=None):
         return _handle_show_events(match_id, self.current_match_id)
+
+    # --- Standings handler ---
+
+    def handle_show_standings(self, league_name=None, season=None):
+        return _handle_show_standings(league_name, season)
