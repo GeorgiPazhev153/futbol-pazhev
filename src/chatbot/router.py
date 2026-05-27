@@ -13,9 +13,24 @@ from src.chatbot.handlers_leagues import (
     handle_show_league_teams, handle_generate_schedule,
     handle_regenerate_schedule, handle_show_schedule
 )
+from src.chatbot.handlers_matches import (
+    handle_select_league as _handle_select_league,
+    handle_show_round as _handle_show_round,
+    handle_select_match as _handle_select_match,
+    handle_record_score as _handle_record_score,
+    handle_record_score_by_clubs as _handle_record_score_by_clubs,
+    handle_add_goal as _handle_add_goal,
+    handle_add_card as _handle_add_card,
+    handle_show_events as _handle_show_events,
+)
 
 
 class Router:
+    def __init__(self):
+        self.current_league_name = None
+        self.current_season = None
+        self.current_match_id = None
+
     def route(self, intent, params):
         handler = getattr(self, f'handle_{intent}', None)
         if handler:
@@ -119,3 +134,52 @@ class Router:
 
     def handle_show_schedule(self, league_name=None, season=None):
         return handle_show_schedule(league_name, season)
+
+    # --- Match handlers ---
+
+    def handle_select_league(self, league_name=None, season=None):
+        if not league_name or not season:
+            return "Моля, използвайте: избери лига <име> <сезон> (напр. избери лига Първа лига 2025/2026)"
+        try:
+            result = _handle_select_league(league_name, season)
+            self.current_league_name = league_name
+            self.current_season = season
+            return result
+        except ValueError as e:
+            return str(e)
+
+    def handle_show_round(self, round_no=None, league_name=None, season=None):
+        if not round_no:
+            return "Моля, използвайте: покажи кръг <N> [<лига> <сезон>]"
+        if league_name and season:
+            return _handle_show_round(league_name, season, round_no)
+        if self.current_league_name and self.current_season:
+            return _handle_show_round(self.current_league_name, self.current_season, round_no)
+        return "Няма избрана лига. Използвайте 'Избери лига <име> <сезон>' или 'Покажи кръг <N> <лига> <сезон>'"
+
+    def handle_select_match(self, match_id=None):
+        if not match_id:
+            return "Моля, използвайте: избери мач <ID>"
+        result = _handle_select_match(match_id)
+        if "Избран мач" in result:
+            self.current_match_id = int(match_id)
+        return result
+
+    def handle_record_score(self, home_goals=None, away_goals=None):
+        return _handle_record_score(home_goals, away_goals, self.current_match_id)
+
+    def handle_record_score_by_clubs(self, home_club=None, away_club=None,
+                                     home_goals=None, away_goals=None):
+        return _handle_record_score_by_clubs(
+            home_club, away_club, home_goals, away_goals,
+            self.current_league_name, self.current_season
+        )
+
+    def handle_add_goal(self, player_name=None, club_name=None, minute=None):
+        return _handle_add_goal(player_name, club_name, minute, self.current_match_id)
+
+    def handle_add_card(self, player_name=None, club_name=None, card_type=None, minute=None):
+        return _handle_add_card(player_name, club_name, card_type, minute, self.current_match_id)
+
+    def handle_show_events(self, match_id=None):
+        return _handle_show_events(match_id, self.current_match_id)
